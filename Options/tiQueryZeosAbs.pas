@@ -232,7 +232,7 @@ begin
         cTIPersistZeosFB, DatabaseName, UserName, Password, lsErrorMessage);
     end;
     on e:exception do
-      raise EtiOPFDBExceptionCanNotConnect.Create( 'Unknown', DatabaseName, UserName, Password, e.message ) ;
+      raise EtiOPFDBExceptionCanNotConnect.Create( cTIPersistZeosFB, DatabaseName, UserName, Password, e.message ) ;
   end ;
 end;
 
