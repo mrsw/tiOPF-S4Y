@@ -78,7 +78,13 @@
 // Some databases do not have a native boolean type, so you must roll it yourself
 // from a CHAR or VARCHAR. The tiOPF will use 'T' & 'F' or 'TRUE ' & 'FALSE'. This
 // can be controled with the compiler directive below:
-{$DEFINE BOOLEAN_CHAR_1}
+{$IFNDEF BOOLEAN_NUM_1}
+  {$DEFINE BOOLEAN_CHAR_1}
+{$ELSE}
+  {$IFDEF BOOLEAN_CHAR_1}
+    {$UNDEF BOOLEAN_CHAR_1}
+  {$ENDIF}
+{$ENDIF}
 
 // tiPerAwareCtrls will use either "Courier New" or "MS Sans Serif"
 // for GUI controls based on this directive.
