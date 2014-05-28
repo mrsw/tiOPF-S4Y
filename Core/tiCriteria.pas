@@ -82,6 +82,7 @@ type
     constructor Create; overload; override;
     constructor Create(pName: string); reintroduce; overload; virtual;
     destructor  Destroy; override;
+
     procedure   MapFieldNames(AClass: TtiClass);
     procedure   AddAndCriteria(ACriteria: TtiCriteria);
     procedure   AddBetween(AAttribute: string; AValue_1, AValue_2: variant);
@@ -155,6 +156,7 @@ type
   protected
     function    GetOwner: TtiCriteria; reintroduce; virtual;
     procedure   SetOwner(const Value: TtiCriteria); reintroduce; virtual;
+    procedure   AssignClassProps(ASource: TtiObject); override;
     procedure   AssignPublicProps(ASource: TtiObject); override;
   public
     constructor Create(AAttribute: string; AValue: Variant; ANegative: boolean = False; AFieldName: string = ''); reintroduce; virtual;
@@ -226,6 +228,8 @@ type
   TtiInCriteria = class(TtiValueCriteriaAbs)
   private
     FValueArray: TValueArray;
+  protected
+    procedure AssignClassProps(ASource: TtiObject);
   public
     function    GetClause: string; override;
     procedure   SetValueArrayLength(pLength: integer);
@@ -262,6 +266,8 @@ type
   TtiBetweenCriteria = class(TtiValueCriteriaAbs)
   private
     FValue_2: variant;
+  protected
+    procedure   AssignClassProps(ASource: TtiObject); override;
   public
     constructor Create(AAttribute: string; AArg_1, AArg_2: variant; ANegative: boolean = false; AFieldName: string = ''); reintroduce; virtual;
     function    GetClause: string; override;
@@ -806,6 +812,12 @@ end;
 
 { TtiSelectionCriteriaAbs }
 
+procedure TtiSelectionCriteriaAbs.AssignClassProps(ASource: TtiObject);
+begin
+  inherited;
+
+end;
+
 procedure TtiSelectionCriteriaAbs.AssignPublicProps(ASource: TtiObject);
 var
   LSource: TtiSelectionCriteriaAbs;
@@ -966,6 +978,16 @@ end;
 
 { TtiInCriteria }
 
+procedure TtiInCriteria.AssignClassProps(ASource: TtiObject);
+begin
+  inherited;
+
+  if ASource is TtiInCriteria then
+  begin
+    ValueArray := (ASource as TtiInCriteria).ValueArray;
+  end;
+end;
+
 function TtiInCriteria.GetClause: string;
 begin
   if isNegative then
@@ -1030,6 +1052,16 @@ end;
 
 
 { TtiBetweenCriteria }
+
+procedure TtiBetweenCriteria.AssignClassProps(ASource: TtiObject);
+begin
+  inherited;
+
+  if ASource is TtiBetweenCriteria then
+  begin
+    FValue_2 := (ASource as TtiBetweenCriteria).Value_2;
+  end;
+end;
 
 constructor TtiBetweenCriteria.Create(AAttribute: string; AArg_1, AArg_2: variant;
     ANegative: boolean = False; AFieldName: string = '');
