@@ -29,6 +29,7 @@ type
     FOnObjectToGUI: TtiObjectToGUIEvent;
     FOnSetupMediator: TtiMediatorEvent;
     FValueList: TtiObjectList;
+    FOnBeforeSetupMediator: TtiMediatorEvent;
     procedure SetComponent(const AValue: TComponent);
     procedure SetComposite(const AValue: Boolean);
     procedure SetObjectUpdateMoment(const AValue: TtiObjectUpdateMoment);
@@ -57,6 +58,7 @@ type
     property OnBeforeGUIToObject: TtiBeforeGUIToObjectEvent read FOnBeforeGUIToObject write SetOnBeforeGUIToObject;
     property OnAfterGUIToObject: TtiAfterGUIToObjectEvent read FOnAfterGUIToObject write SetOnAfterGUIToObject;
     property OnObjectToGUI: TtiObjectToGUIEvent read FOnObjectToGUI write SetOnObjectToGUI;
+    Property OnBeforeSetupMediator: TtiMediatorEvent Read FOnBeforeSetupMediator Write FOnBeforeSetupMediator;
     Property OnSetupMediator: TtiMediatorEvent Read FOnSetupMediator Write FOnSetupMediator;
   end;
 
@@ -72,9 +74,11 @@ type
     function GetOwner: TPersistent; override;
     function AddPropertyLinkDef: TtiPropertyLinkDef;
     function IndexOfComponent(AComponent: TComponent): integer;
+    function IndexOfFieldName(AFieldName: string): integer;
     function IndexOfMediator(AMediator: TtiMediatorView): integer;
     function IndexOfTag(ATag: LongInt): integer;
     function FindByComponent(AComponent: TComponent): TtiPropertyLinkDef;
+    function FindByFieldName(AFieldName: string): TtiPropertyLinkDef;
     function FindByMediator(AMediator: TtiMediatorView): TtiPropertyLinkDef;
     function FindByTag(ATag: LongInt): TtiPropertyLinkDef;
     property ModelMediator: TtiModelMediator read FModelMediator;
@@ -115,6 +119,7 @@ type
     function AddProperty(const AFieldName: string; const AGUIComponent: TComponent): TtiPropertyLinkDef;
     function AddComposite(const ADisplayNames: string; const AGUIComponent: TComponent): TtiPropertyLinkDef;
     function FindByComponent(AComponent: TComponent): TtiPropertyLinkDef;
+    function FindByFieldName(AFieldName: string): TtiPropertyLinkDef;
     function FindByMediator(AMediator: TtiMediatorView): TtiPropertyLinkDef;
     function FindByTag(ATag: LongInt): TtiPropertyLinkDef;
     {: Find the mediator view for the given component. Returns nil if not found. }
@@ -395,9 +400,12 @@ procedure TtiPropertyLinkDef.CreateMediator;
 begin
   if Assigned(FMediator) then
     Exit; //==>
+
   if (FMediatorDef = nil) then
     MediatorError(Self,SErrNoMediator, [Component.Name, Component.ClassName, FieldName]);
+
   FMediator := FMediatorDef.MediatorClass.Create;
+
   if FMediator.CompositeMediator then
   begin
     FMediator.FieldName := FieldName;
@@ -406,6 +414,7 @@ begin
     FMediator.FieldName := tiValueFieldName(FieldName);
     FMediator.RootFieldName := tiRootFieldName(FieldName);
   end;
+
   FMediator.OnBeforeGUIToObject := Self.OnBeforeGUIToObject;
   FMediator.OnAfterGUIToObject := Self.OnAfterGUIToObject;
   FMediator.OnObjectToGUI := Self.OnObjectToGUI;
@@ -413,7 +422,12 @@ begin
   FMediator.ValueList := Self.ValueList;
   FMediator.Subject := ModelMediator.Subject;
   FMediator.ObjectUpdateMoment := Self.ObjectUpdateMoment;
+
+  if Assigned(FOnBeforeSetupMediator) then
+    FOnBeforeSetupMediator(FMediator);
+
   FMediator.Active := True;
+
   if Assigned(FOnSetupMediator) then
     FOnSetupMediator(FMediator);
 end;
@@ -601,6 +615,7 @@ begin
       ADef.FMediatorDef := gMediatorManager.FindDefFor(Subject, ADef.Component)
     else
       ADef.FMediatorDef := gMediatorManager.FindDefFor(Subject, ADef.Component, tiValueFieldName(ADef.FieldName));
+
     if (ADef.FMediatorDef = nil) then
       MediatorError(Self, SErrNoMediator, [ADef.Component.Name, ADef.Component.ClassName, ADef.FieldName]);
   end;
@@ -676,6 +691,12 @@ end;
 function TtiModelMediator.FindByComponent(AComponent: TComponent): TtiPropertyLinkDef;
 begin
   Result := FDefs.FindByComponent(AComponent);
+end;
+
+function TtiModelMediator.FindByFieldName(
+  AFieldName: string): TtiPropertyLinkDef;
+begin
+  Result := FDefs.FindByFieldName(AFieldName);
 end;
 
 function TtiModelMediator.FindByMediator(AMediator: TtiMediatorView): TtiPropertyLinkDef;
@@ -760,6 +781,13 @@ begin
     Dec(Result);
 end;
 
+function TtiPropertyLinkDefs.IndexOfFieldName(AFieldName: string): integer;
+begin
+  Result := Count - 1;
+  while (Result >= 0) and (GetD(Result).FieldName <> AFieldName) do
+    Dec(Result);
+end;
+
 function TtiPropertyLinkDefs.IndexOfMediator(AMediator: TtiMediatorView): integer;
 begin
   Result := Count - 1;
@@ -779,6 +807,18 @@ var
   I: integer;
 begin
   I := IndexOfComponent(AComponent);
+  if (I = -1) then
+    Result := nil
+  else
+    Result := GetD(I);
+end;
+
+function TtiPropertyLinkDefs.FindByFieldName(
+  AFieldName: string): TtiPropertyLinkDef;
+var
+  I: integer;
+begin
+  I := IndexOfFieldName(AFieldName);
   if (I = -1) then
     Result := nil
   else
