@@ -127,6 +127,7 @@ type
     {: Find the component for the given mediator view. Returns nil if not found. }
     function FindComponent(AMediator: TtiMediatorView): TComponent;
     procedure SubjectChanged;
+    procedure UpdateValidStatus;
 
     property Subject: TtiObject read FSubject write SetSubject;
     property Active: Boolean read FActive write SetActive;
@@ -582,6 +583,19 @@ var
 begin
   for I := 0 to FDefs.Count - 1 do
     FDefs[I].FreeMediator(True);
+end;
+
+procedure TtiModelMediator.UpdateValidStatus;
+var
+  i: integer;
+  LMediator: TtiMediatorView;
+begin
+  for i := 0 to FDefs.Count - 1 do
+  begin
+    LMediator := FDefs[i].Mediator;
+    if Assigned(LMediator) then
+      LMediator.TestIfValid;
+  end;
 end;
 
 procedure TtiModelMediator.Bind;
