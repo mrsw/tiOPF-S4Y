@@ -520,9 +520,10 @@ begin
 
   FSubject := AValue;
   FSubjectObserver.Subject := AValue;
-  if (FSubject = nil) then
-    Active := False
-  else if Active then
+//  if (FSubject = nil) then
+//    Active := False
+//  else if Active then
+  if Active then                   // Carlo Marona 2014-03-27
   begin
     if not LSubjectWasAssigned then
       Bind;
@@ -530,7 +531,9 @@ begin
     for I := 0 to FDefs.Count - 1 do
       if Assigned(FDefs[I].FMediator) then
         FDefs[I].FMediator.Subject := AValue;
-    FSubject.NotifyObservers;
+
+    if Assigned(FSubject) then    // Carlo Marona  2014-03-27
+      FSubject.NotifyObservers;
   end;
 end;
 
